@@ -13,7 +13,7 @@ namespace SawMill.App.Menu
         private ListView mCategoriesListView;
         private ListView mPluginsListView;
         private List<string> mListOfCategories = new();
-        private Dictionary<string, List<IPlugin>> mPlugins;
+        private readonly Dictionary<string, List<IPlugin>> mPlugins;
         private int mSelectedCategory;
         private int mSelectedAlgo;
         public MainMenu(Dictionary<string, List<IPlugin>> plugins)

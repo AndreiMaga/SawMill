@@ -17,4 +17,10 @@
     <ProjectReference Include="..\..\PluginInterface\PluginInterface.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="FileHelpers\Headers.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

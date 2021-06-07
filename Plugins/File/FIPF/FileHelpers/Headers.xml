@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Headers>
+	<File>
+		<Name>jpg</Name>
+		<Size>200000000</Size>
+		<Header>\xff\xd8\xff\xe0\x00\x10</Header>
+		<Footer>\xff\xd9</Footer>
+	</File>
+	<File>
+		<Name>gif</Name>
+		<Size>5000000</Size>
+		<Header>\x47\x49\x46\x38\x37\x61</Header>
+		<Footer>\x00\x3b</Footer>
+	</File>
+	<File>
+		<Name>gif</Name>
+		<Size>5000000</Size>
+		<Header>\x47\x49\x46\x38\x37\x61</Header>
+		<Footer>\x00\x00\x3b</Footer>
+	</File>
+</Headers>

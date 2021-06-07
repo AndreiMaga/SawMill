@@ -12,11 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="App\Utils\" />
+    <ProjectReference Include="..\Plugins\PluginInterface\PluginInterface.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Plugins\PluginInterface\PluginInterface.csproj" />
+    <Folder Include="App\Utils\" />
   </ItemGroup>
 
 </Project>
