@@ -80,6 +80,7 @@ namespace FIPF
                     long end = footerIndexes[i];
                     using FileStream stream = file.OpenRead();
                     var fileStream = System.IO.File.Create(Path.Combine(dirPath, Path.GetRandomFileName() + "." + header.Name));
+                    Logger.Information(string.Format("Using start = {0} end = {1} for file {2}",start, end, fileStream.Name));
                     stream.Seek(start, SeekOrigin.Begin);
                     long fileBytes = end - start;
                     byte[] bytearray = new byte[fileBytes];
