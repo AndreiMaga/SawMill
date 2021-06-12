@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Serialization;
 
-namespace FIPF.File
+namespace PluginInterface.Common.File
 {
     public class FileHeaders
     {
@@ -16,7 +14,7 @@ namespace FIPF.File
         public FileHeaders()
         {
             string assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string xmlFileName = Path.Combine(assemblyFolder, "FileHelpers", "Headers.xml");
+            string xmlFileName = Path.Combine(assemblyFolder, "Common", "File", "FileHelpers", "Headers.xml");
             XmlSerializer serializer = new XmlSerializer(typeof(Headers));
 
             using (FileStream fileStream = new FileStream(xmlFileName, FileMode.Open))

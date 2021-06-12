@@ -15,6 +15,10 @@
     <ProjectReference Include="..\Plugins\PluginInterface\PluginInterface.csproj" />
   </ItemGroup>
 
+	<Target Name="CopyHeaders" AfterTargets="AfterBuild">
+		<Copy SourceFiles="..\Plugins\PluginInterface\Common\File\FileHelpers\Headers.xml" DestinationFolder="$(OutDir)\Common\File\FileHelpers" />
+	</Target>
+	
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
