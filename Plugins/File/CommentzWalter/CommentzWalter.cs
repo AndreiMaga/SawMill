@@ -28,17 +28,7 @@ namespace CommentzWalter
             public string Type { get; set; }
             public string Name { get; set; }
 
-            public Node ACSuffixLink { get; set; }
-
-            public Node ACOutputLink { get; set; }
-
-            public Node CWSuffixLink { get; set; }
-            public Node CWOutputLink { get; set; }
-
             public List<Node> Children { get; set; }
-
-            public int MinDifference_s1 { get; set; }
-            public int MinDifference_s2 { get; set; }
 
             public int Shift1 { get; set; }
             public int Shift2 { get; set; }
@@ -49,11 +39,7 @@ namespace CommentzWalter
                 Depth = depth;
                 Parent = parent;
                 Word = null;
-                ACSuffixLink = null;
-                ACOutputLink = null;
                 Children = new();
-                MinDifference_s1 = -1;
-                MinDifference_s2 = -1;
             }
         }
 
@@ -113,37 +99,6 @@ namespace CommentzWalter
                 return node.Children.Find(child => child.Character == c);
             }
 
-            public static Node GetSuffixLink(Node node)
-            {
-                var searcher = node.Parent.ACSuffixLink;
-
-                Node nodehasChild = null;
-
-                while (!IsRoot(searcher) && !((nodehasChild = NodeHasChild(searcher, node.Character)) != null))
-                {
-                    searcher = searcher.ACSuffixLink;
-                    if (searcher == null)
-                    {
-                        throw new Exception();
-                    }
-                }
-
-                if (nodehasChild != null)
-                {
-                    return nodehasChild;
-                }
-                else
-                {
-                    if (!IsRoot(searcher))
-                    {
-                        throw new Exception();
-                    }
-                    return searcher;
-                }
-
-            }
-
-
         }
 
         class CWTrie : Trie
@@ -187,54 +142,12 @@ namespace CommentzWalter
                 {
                     var currentNode = nodes.Dequeue();
 
-                    currentNode.Shift1 = currentNode.CWSuffixLink == null ? MinDepth : currentNode.MinDifference_s1;
-                    currentNode.Shift2 = currentNode.CWOutputLink == null ? currentNode.Parent.Shift2 : currentNode.MinDifference_s2;
+                    currentNode.Shift1 = MinDepth;
+                    currentNode.Shift2 = currentNode.Parent.Shift2;
                     currentNode.Children.ForEach(child => nodes.Enqueue(child));
 
                 }
 
-            }
-
-            public void CreateFailureLinks()
-            {
-                Queue<Node> nodes = new();
-
-                Root.Children.ForEach(child =>
-                {
-                    child.ACSuffixLink = Root;
-                    child.Children.ForEach(ch => nodes.Enqueue(ch));
-                });
-
-
-                while (nodes.Count > 0)
-                {
-                    var currentNode = nodes.Dequeue();
-                    currentNode.Children.ForEach(ch => nodes.Enqueue(ch));
-                    var ACSuffixNode = GetSuffixLink(currentNode);
-                    var suffixIsWord = ACSuffixNode.Word != null;
-                    currentNode.ACSuffixLink = ACSuffixNode;
-
-                    currentNode.ACOutputLink = suffixIsWord ? ACSuffixNode : ACSuffixNode.ACOutputLink;
-
-                    var isSet = currentNode.Word != null;
-
-                    if (ACSuffixNode.MinDifference_s1 == -1 || ACSuffixNode.MinDifference_s1 > currentNode.Depth - ACSuffixNode.Depth)
-                    {
-                        ACSuffixNode.MinDifference_s1 = currentNode.Depth - ACSuffixNode.Depth;
-                        ACSuffixNode.ACSuffixLink = currentNode;
-                    }
-
-                    if (isSet)
-                    {
-                        if (ACSuffixNode.MinDifference_s2 == -1 || ACSuffixNode.MinDifference_s2 > currentNode.Depth - ACSuffixNode.Depth)
-                        {
-                            ACSuffixNode.MinDifference_s2 = currentNode.Depth - ACSuffixNode.Depth;
-                            ACSuffixNode.ACOutputLink = currentNode;
-                        }
-                    }
-
-                }
-                InitializeShift();
             }
 
             private int CharFunction(byte c)
@@ -276,7 +189,7 @@ namespace CommentzWalter
                 {
 
                     Node nodehasChild;
-                    while (i+j < text.Length &&((nodehasChild = NodeHasChild(v, text[i + j])) != null))
+                    while (i + j < text.Length && ((nodehasChild = NodeHasChild(v, text[i + j])) != null))
                     {
                         v = nodehasChild;
                         j += 1;
@@ -319,7 +232,7 @@ namespace CommentzWalter
             }
 
 
-            cw.CreateFailureLinks();
+            cw.InitializeShift();
             var stream = file.OpenRead();
 
             int len = 1024 * 1024;
@@ -331,8 +244,12 @@ namespace CommentzWalter
             while ((read = stream.Read(arr, 0, len)) > 0)
             {
                 var matches = cw.ReportAllMatches(arr, offset);
-                matches.ForEach(m =>
+
+                lock (FinalResults)
                 {
+                    matches.ForEach(m =>
+                {
+
                     if (FinalResults.ContainsKey(m.Name))
                     {
                         FinalResults[m.Name].Add(m);
@@ -341,28 +258,32 @@ namespace CommentzWalter
                     {
                         FinalResults.Add(m.Name, new List<Result> { m });
                     }
+
                 });
+                }
+
                 offset += read;
             }
 
         }
 
 
-        public Dictionary<string,List<Result>> FinalResults = new();
+        public Dictionary<string, List<Result>> FinalResults = new();
         public CommentzWalter(FileInfo file, Logger logger)
         {
             List<Task> taskList = new();
             // search for each type
-            foreach (var f in FileHeaders.Headers.File.GroupBy(k => k.Name).ToDictionary(g => g.Key, g => g.ToList()))
+            var headerDict = FileHeaders.Headers.File.GroupBy(k => k.Name).ToDictionary(g => g.Key, g => g.ToList());
+            foreach (var h in headerDict)
             {
                 Task t = new Task(() =>
                 {
-                    RunAsync(file, f);
+                    RunAsync(file, h);
                 });
                 t.Start();
                 taskList.Add(t);
             }
-
+            logger.Information(string.Format("Started {0} tasks for {1} file types", taskList.Count, headerDict.Count));
             Task.WaitAll(taskList.ToArray());
         }
 
