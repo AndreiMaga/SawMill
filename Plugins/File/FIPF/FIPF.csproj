@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(SolutionDir)\SawMill\bin\Debug\net5.0\plugins\</OutputPath>
+	  <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(SolutionDir)\SawMill\bin\Debug\plugins\FIPF</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

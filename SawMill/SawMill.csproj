@@ -15,7 +15,11 @@
     <ProjectReference Include="..\Plugins\PluginInterface\PluginInterface.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
     <Folder Include="App\Utils\" />
   </ItemGroup>
 
