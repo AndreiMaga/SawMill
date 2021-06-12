@@ -179,45 +179,67 @@ namespace CommentzWalter
 
             }
 
-            public List<Result> ReportAllMatches(byte[] text, int offset)
+            public List<Result> ReportAllMatches(Stream stream, int bufferLen = 1024 * 1024)
             {
                 int i = MinDepth - 1;
                 List<Result> matches = new();
                 var v = Root;
                 int j = 0;
-                while (i < text.Length)
+
+                int read;
+                int offset = 0;
+                byte[] buffer = new byte[bufferLen];
+                while((read = stream.Read(buffer, 0, bufferLen)) > 0)
                 {
-
-                    Node nodehasChild;
-                    while (i + j < text.Length && ((nodehasChild = NodeHasChild(v, text[i + j])) != null))
+                    while( i < read)
                     {
-                        v = nodehasChild;
-                        j += 1;
-
-                        if (v.Word != null)
+                        Node nodehasChild;
+                        while (i + j < buffer.Length && ((nodehasChild = NodeHasChild(v, buffer[i + j])) != null))
                         {
+                            v = nodehasChild;
+                            j += 1;
 
-                            matches.Add(new Result
+                            if (v.Word != null)
                             {
-                                Header = v.Word,
-                                Index = offset + i,
-                                Type = v.Type,
-                                Name = v.Name
-                            });
-                        }
 
+                                matches.Add(new Result
+                                {
+                                    Header = v.Word,
+                                    Index = offset + i,
+                                    Type = v.Type,
+                                    Name = v.Name
+                                });
+                            }
+
+
+                            // check if we can read while matching
+                            if(i+j >= bufferLen && stream.Position != stream.Length)
+                            {
+                                
+                                int lastRead = read;
+                                if((read = stream.Read(buffer, 0, bufferLen)) > 0)
+                                {
+                                    offset += lastRead;
+                                }
+
+                            }
+                        }
+                        if (j > i)
+                        {
+                            j = i;
+                        }
+                        i += ShiftFunction(v, j);
+                        j = 0;
+                        v = Root;
                     }
-                    if (j > i)
-                    {
-                        j = i;
-                    }
-                    i += ShiftFunction(v, j);
-                    j = 0;
-                    v = Root;
+                    offset += read;
+                    
                 }
+
                 return matches;
             }
         }
+
 
         private void RunAsync(FileInfo file, KeyValuePair<string, List<PluginInterface.Common.File.File>> f)
         {
@@ -235,19 +257,13 @@ namespace CommentzWalter
             cw.InitializeShift();
             var stream = file.OpenRead();
 
-            int len = 1024 * 1024;
-
-            byte[] arr = new byte[len];
             List<Dictionary<byte[], List<int>>> m = new();
-            int read = 0;
-            int offset = 0;
-            while ((read = stream.Read(arr, 0, len)) > 0)
-            {
-                var matches = cw.ReportAllMatches(arr, offset);
 
-                lock (FinalResults)
-                {
-                    matches.ForEach(m =>
+            var matches = cw.ReportAllMatches(stream);
+
+            lock (FinalResults)
+            {
+                matches.ForEach(m =>
                 {
 
                     if (FinalResults.ContainsKey(m.Name))
@@ -260,9 +276,6 @@ namespace CommentzWalter
                     }
 
                 });
-                }
-
-                offset += read;
             }
 
         }
