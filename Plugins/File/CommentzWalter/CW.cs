@@ -1,14 +1,13 @@
-﻿using PluginInterface.Logger;
+﻿using PluginInterface.Common.File;
+using PluginInterface.Logger;
 using PluginInterface.Plugin;
-using System;
-using System.IO;
-using Terminal.Gui;
-using static PluginInterface.Interfaces.IMenu;
-using System.Linq;
-using static CommentzWalter.CommentzWalter;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
-using PluginInterface.Common.File;
+using Terminal.Gui;
+using static CommentzWalter.CommentzWalter;
+using static PluginInterface.Interfaces.IMenu;
 
 namespace CommentzWalter
 {
@@ -92,13 +91,13 @@ namespace CommentzWalter
 
             List<Task> taskList = new();
 
-            foreach(var kvp in cw.FinalResults)
+            foreach (var kvp in cw.FinalResults)
             {
                 string fileType = kvp.Key;
                 List<Result> headerResults = kvp.Value.Where(v => v.Type == "Header").ToList();
                 List<Result> footerResults = kvp.Value.Where(v => v.Type == "Footer").ToList();
 
-                Task t = new Task(() => 
+                Task t = new Task(() =>
                 {
                     SaveAsync(file, fileType, headerResults, footerResults);
                 });

@@ -29,7 +29,7 @@ namespace FIPF
         public void OnEnter(Toplevel top)
         {
             // load file headers
-            if(FileHeaders.Headers == null)
+            if (FileHeaders.Headers == null)
             {
                 new FileHeaders();
             }
@@ -62,7 +62,7 @@ namespace FIPF
             mWindow.KeyDown += KeyDownHandler;
 
             FileInfo file = new FileInfo(mFilePath);
-            
+
             foreach (var header in FileHeaders.Headers.File)
             {
                 var headerSearch = new BoyerMooreBinarySearch(FileHeaders.ByteArrayFromString(header.Header));
@@ -74,17 +74,17 @@ namespace FIPF
                 {
                     Directory.CreateDirectory(dirPath);
                 }
-                for (int i =0; i< headerIndexes.Count && i < footerIndexes.Count; i++)
+                for (int i = 0; i < headerIndexes.Count && i < footerIndexes.Count; i++)
                 {
                     long start = headerIndexes[i];
                     long end = footerIndexes[i];
                     using FileStream stream = file.OpenRead();
                     var fileStream = System.IO.File.Create(Path.Combine(dirPath, Path.GetRandomFileName() + "." + header.Name));
-                    Logger.Information(string.Format("Using start = {0} end = {1} for file {2}",start, end, fileStream.Name));
+                    Logger.Information(string.Format("Using start = {0} end = {1} for file {2}", start, end, fileStream.Name));
                     stream.Seek(start, SeekOrigin.Begin);
                     long fileBytes = end - start;
                     byte[] bytearray = new byte[fileBytes];
-                    stream.Read(bytearray, 0, (int) fileBytes);
+                    stream.Read(bytearray, 0, (int)fileBytes);
                     fileStream.Write(bytearray, 0, (int)fileBytes);
                     fileStream.Close();
                 }
