@@ -21,7 +21,7 @@ namespace PluginInterface.Logger
 
         private Logger()
         {
-            string logFileName = DateTime.UtcNow.ToShortTimeString() + "-" + DateTime.UtcNow.ToShortDateString() + ".txt";
+            string logFileName = DateTime.UtcNow.ToShortTimeString() + "-" + DateTime.UtcNow.ToShortDateString() + ".log";
             logFileName = logFileName.Replace(":", "-").Replace(" ", "-").Replace("/", "-");
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(Path.Combine("logs", logFileName)).CreateLogger();
