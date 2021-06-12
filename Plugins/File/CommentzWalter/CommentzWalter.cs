@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using File = PluginInterface.Common.File.File;
 
 namespace CommentzWalter
 {
@@ -16,7 +17,7 @@ namespace CommentzWalter
             public byte[] Header;
             public int Index;
             public string Type;
-            public string Name;
+            public File HeaderFile;
         }
         class Node
         {
@@ -27,6 +28,7 @@ namespace CommentzWalter
             public Node Parent { get; set; }
             public string Type { get; set; }
             public string Name { get; set; }
+            public File HeaderFile { get; set; }
 
             public List<Node> Children { get; set; }
 
@@ -57,7 +59,7 @@ namespace CommentzWalter
 
             public static Node CreateNode(byte character, int depth, Node parent) => new(character, depth, parent);
 
-            public void AddWord(byte[] word, string type = "Header", string name = "")
+            public void AddWord(byte[] word, string type = "Header", File headerFile = null)
             {
                 var currentNode = Root;
                 var currentDepth = 1;
@@ -84,7 +86,7 @@ namespace CommentzWalter
 
                 currentNode.Word = word;
                 currentNode.Type = type;
-                currentNode.Name = name;
+                currentNode.HeaderFile = headerFile;
                 Size += 1;
 
             }
@@ -112,10 +114,10 @@ namespace CommentzWalter
                 Char_lookup_table = new();
             }
 
-            public new void AddWord(byte[] word, string type = "Header", string name = "")
+            public new void AddWord(byte[] word, string type = "Header", File headerFile = null)
             {
 
-                base.AddWord(word, type, name);
+                base.AddWord(word, type, headerFile);
                 var pos = 1;
 
 
@@ -181,7 +183,7 @@ namespace CommentzWalter
 
             public List<Result> ReportAllMatches(Stream stream, int bufferLen = 1024 * 1024)
             {
-                int i = MinDepth - 1;
+                int i = 0;
                 List<Result> matches = new();
                 var v = Root;
                 int j = 0;
@@ -207,13 +209,13 @@ namespace CommentzWalter
                                     Header = v.Word,
                                     Index = offset + i,
                                     Type = v.Type,
-                                    Name = v.Name
+                                    HeaderFile = v.HeaderFile
                                 });
                             }
 
 
                             // check if we can read while matching
-                            if(i+j >= bufferLen && stream.Position != stream.Length)
+                            if(i + j >= bufferLen && !IsRoot(v) && stream.Position != stream.Length)
                             {
                                 
                                 int lastRead = read;
@@ -232,6 +234,7 @@ namespace CommentzWalter
                         j = 0;
                         v = Root;
                     }
+                    i = 0;
                     offset += read;
                     
                 }
@@ -241,16 +244,13 @@ namespace CommentzWalter
         }
 
 
-        private void RunAsync(FileInfo file, KeyValuePair<string, List<PluginInterface.Common.File.File>> f)
+        private void RunAsync(FileInfo file, KeyValuePair<string, List<File>> f)
         {
-            List<Result> results = new();
-
-            List<string> toFind = new();
             CWTrie cw = new();
             foreach (var h in f.Value)
             {
-                cw.AddWord(FileHeaders.ByteArrayFromString(h.Header), "Header", f.Key);
-                cw.AddWord(FileHeaders.ByteArrayFromString(h.Footer), "Footer", f.Key);
+                cw.AddWord(FileHeaders.ByteArrayFromString(h.Header), "Header", h);
+                cw.AddWord(FileHeaders.ByteArrayFromString(h.Footer), "Footer", h);
             }
 
 
@@ -266,13 +266,13 @@ namespace CommentzWalter
                 matches.ForEach(m =>
                 {
 
-                    if (FinalResults.ContainsKey(m.Name))
+                    if (FinalResults.ContainsKey(m.HeaderFile.Name))
                     {
-                        FinalResults[m.Name].Add(m);
+                        FinalResults[m.HeaderFile.Name].Add(m);
                     }
                     else
                     {
-                        FinalResults.Add(m.Name, new List<Result> { m });
+                        FinalResults.Add(m.HeaderFile.Name, new List<Result> { m });
                     }
 
                 });
@@ -289,7 +289,7 @@ namespace CommentzWalter
             var headerDict = FileHeaders.Headers.File.GroupBy(k => k.Name).ToDictionary(g => g.Key, g => g.ToList());
             foreach (var h in headerDict)
             {
-                Task t = new Task(() =>
+                Task t = new(() =>
                 {
                     RunAsync(file, h);
                 });

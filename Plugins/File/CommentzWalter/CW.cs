@@ -120,16 +120,32 @@ namespace CommentzWalter
             }
             for (int i = 0; i < headerResults.Count && i < footerResults.Count; i++)
             {
-                long start = headerResults[i].Index;
-                long end = footerResults[i].Index;
-                var fileStream = System.IO.File.Create(Path.Combine(dirPath, Path.GetRandomFileName() + "." + fileType));
-                Logger.Information(string.Format("Using start = {0} end = {1} for file {2}", start, end, fileStream.Name));
-                stream.Seek(start, SeekOrigin.Begin);
-                long fileBytes = end - start;
-                byte[] bytearray = new byte[fileBytes];
-                stream.Read(bytearray, 0, (int)fileBytes);
-                fileStream.Write(bytearray, 0, (int)fileBytes);
-                fileStream.Close();
+
+                Result header = headerResults[i];
+                long start = header.Index;
+                
+                foreach(Result footer in footerResults)
+                {
+                    long end = footer.Index;
+                    long len = end - start;
+                    if(len <= 0 || len > long.Parse(header.HeaderFile.Size))
+                    {
+                        continue;
+                    }
+
+                    var fileStream = System.IO.File.Create(Path.Combine(dirPath, Path.GetRandomFileName() + "." + fileType));
+                    Logger.Information(string.Format("Using start = {0} end = {1} for file {2}", start, end, fileStream.Name));
+                    stream.Seek(start, SeekOrigin.Begin);
+                    long fileBytes = end - start;
+                    byte[] bytearray = new byte[fileBytes];
+                    stream.Read(bytearray, 0, (int)fileBytes);
+                    fileStream.Write(bytearray, 0, (int)fileBytes);
+                    fileStream.Close();
+                    if(header.HeaderFile.ContinueAfterFirstHit == "0")
+                    {
+                        break;
+                    }
+                }
             }
         }
 
